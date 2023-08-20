@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Show Players</title>
+</head>
+<body>
+    <h1>Show Players</h1>
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Rating</th>
+            <th>Position</th>
+            <th>Nation</th>
+            <th>Club</th>
+            <th>League</th>
+        </tr>
+        {% for player in players %}
+        <tr>
+            <td>{{ player.name }}</td>
+            <td>{{ player.rating }}</td>
+            <td>{{ player.position }}</td>
+            <td>{{ player.nation }}</td>
+            <td>{{ player.club }}</td>
+            <td>{{ player.league }}</td>
+        </tr>
+        {% endfor %}
+    </table>
+</body>
+</html>

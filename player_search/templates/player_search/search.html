@@ -5,10 +5,22 @@
 </head>
 <body>
   <h1>FIFA Player Search</h1>
+  <a href="{% url 'player_search:show_players' %}">Show Players</a>
+
   <form method="post">
     {% csrf_token %}
     {{ form.as_p }}
     <button type="submit">Search</button>
   </form>
+  {% if players %}
+  <form method="post" action="{% url 'player_search:add_player' %}">
+    {% csrf_token %}
+    <input type="hidden" name="player_name" value="{{ form.cleaned_data.player_name }}">
+    <input type="hidden" name="player_rating" value="{{ form.cleaned_data.player_rating }}">
+    <button type="submit">Add Player</button>
+  </form>
+  {% endif %}
+
 </body>
 </html>
+

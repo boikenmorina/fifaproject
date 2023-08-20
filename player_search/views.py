@@ -1,5 +1,5 @@
 import requests
-from django.shortcuts import render
+from django.shortcuts import render, redirect
 from .forms import PlayerSearchForm
 from .models import Player
 
@@ -14,7 +14,7 @@ def search_player(request):
         api_url = 'https://futdb.app/api/players/search'
 
         # Replace 'YOUR_AUTH_TOKEN' with your actual authentication token
-        auth_token =  'aa1bc882-5c89-467e-bee1-b7d1e1be8382'
+        auth_token = 'aa1bc882-5c89-467e-bee1-b7d1e1be8382'
 
         request_body = {
             'name': player_name,
@@ -27,9 +27,49 @@ def search_player(request):
             data = response.json()
 
             players = data.get('items', [])
+            user = request.user
+
+            for player_data in players:
+                player = Player.objects.create(
+                    user=user,
+                    name=player_data['name'],
+                    rating=player_data['rating'],
+                    position=player_data['position'],
+                    nation=player_data['nation'],
+                    club=player_data['club'],
+                    league=player_data['league']
+                )
+
             return render(request, 'player_search/results.html', {'players': players})
 
         except requests.exceptions.RequestException as e:
             return render(request, 'player_search/search.html', {'form': form, 'error_message': str(e)})
 
     return render(request, 'player_search/search.html', {'form': form})
+
+def add_player(request):
+    if request.method == 'POST':
+        form = PlayerSearchForm(request.POST)
+        if form.is_valid():
+            user = request.user
+            player = Player(
+                user=user,
+                name=form.cleaned_data['player_name'],
+                rating=form.cleaned_data['player_rating'],
+                # ... Fill in other player data fields ...
+            )
+            player.save()
+            form = PlayerSearchForm()
+            return render(request, 'player_search/search.html', {'form': form, 'success_message': 'Player added successfully!'})
+
+    return redirect('player_search:search_player')
+
+def show_players(request):
+    # Get the currently logged-in user
+    user = request.user
+
+    # Retrieve players associated with the logged-in user
+    players = Player.objects.filter(user=user)
+
+    return render(request, 'player_search/show_players.html', {'players': players})
+
