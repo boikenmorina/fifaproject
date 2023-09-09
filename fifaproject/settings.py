@@ -127,3 +127,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_REDIRECT_URL = 'player_search:search_player'
 LOGOUT_REDIRECT_URL = 'player_search:search_player'
+
+CORS_ALLOW_ALL_ORIGINS = True
+
+
+

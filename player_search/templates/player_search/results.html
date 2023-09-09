@@ -1,29 +1,51 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Search Results</title>
+    <title>Search Results</title>
 </head>
 <body>
-  <h1>Search Results</h1>
-  <table>
-    <tr>
-      <th>Name</th>
-      <th>Rating</th>
-      <th>Position</th>
-      <th>Nation</th>
-      <th>Club</th>
-      <th>League</th>
-    </tr>
-    {% for player in players %}
-    <tr>
-      <td>{{ player.name }}</td>
-      <td>{{ player.rating }}</td>
-      <td>{{ player.position }}</td>
-      <td>{{ player.nation }}</td>
-      <td>{{ player.club }}</td>
-      <td>{{ player.league }}</td>
-    </tr>
+    <h1>Search Results</h1>
+
+    <!-- Display messages to the user -->
+    {% if messages %}
+    <ul class="messages">
+        {% for message in messages %}
+        <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    <table>
+        <tr>
+            <th>Name</th>
+            <th>Rating</th>
+            <th>Position</th>
+            <th>Nation</th>
+            <th>Club</th>
+            <th>League</th>
+            <th>Action</th>
+        </tr>
+        {% for player in players %}
+        <tr>
+            <td>{{ player.name }}</td>
+            <td>{{ player.rating }}</td>
+            <td>{{ player.position }}</td>
+            <td>{{ player.nation }}</td>
+            <td>{{ player.club }}</td>
+            <td>{{ player.league }}</td>
+            <!-- "Add Player" button -->
+            <td><a href="{% url 'player_search:add_player' player.id %}">Add Player</a></td>
+        </tr>
+        {% endfor %}
+    </table>
+    {% if messages %}
+<ul class="messages">
+    {% for message in messages %}
+    <li{% if message.tags %} class="{{ message.tags }}"{% endif %}>{{ message }}</li>
     {% endfor %}
-  </table>
+</ul>
+{% endif %}
+
 </body>
 </html>
+
