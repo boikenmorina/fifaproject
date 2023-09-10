@@ -5,6 +5,8 @@ from .models import Player
 from django.contrib import messages
 from .serializers import PlayerSerializer
 from django.http import JsonResponse
+from collections import defaultdict
+from django.contrib.auth.decorators import login_required
 
 
 
@@ -72,7 +74,24 @@ def show_players(request):
 
 
 
-def get_players(request):
-    players = Player.objects.filter(user_id=1)
-    serializer = PlayerSerializer(players, many=True)
-    return JsonResponse(serializer.data, safe=False)
+
+def get_all_data(request):
+    if not request.user.is_authenticated:
+        # Return a default response or an error for unauthenticated users
+        return JsonResponse({"error": "User not authenticated"})
+    user = request.user.id
+    players = Player.objects.filter(user=user).order_by('-rating')
+
+    # Organize players by league, club, and country
+    data = {
+        "leagues": defaultdict(list),
+        "clubs": defaultdict(list),
+        "nations": defaultdict(list),
+    }
+
+    for player in players:
+        data["leagues"][player.league].append(PlayerSerializer(player).data)
+        data["clubs"][player.club].append(PlayerSerializer(player).data)
+        data["nations"][player.nation].append(PlayerSerializer(player).data)
+
+    return JsonResponse(data)
