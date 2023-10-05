@@ -19,9 +19,9 @@
             <td>{{ player.name }}</td>
             <td>{{ player.rating }}</td>
             <td>{{ player.position }}</td>
-            <td>{{ player.nation }}</td>
-            <td>{{ player.club }}</td>
-            <td>{{ player.league }}</td>
+            <td>{{ player.nation.name }}</td>
+            <td>{{ player.club.name }}</td>
+            <td>{{ player.club.league.name }}</td>
         </tr>
         {% endfor %}
     </table>

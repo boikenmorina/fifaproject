@@ -1,7 +1,7 @@
 import requests
 from django.shortcuts import render, redirect
 from .forms import PlayerSearchForm
-from .models import Player
+from .models import Player, Nation, Club, League
 from django.contrib import messages
 from .serializers import PlayerSerializer
 from django.http import JsonResponse
@@ -40,8 +40,10 @@ def search_player(request):
     return render(request, 'player_search/search.html', {'form': form})
 
 
+import requests
+
 def add_player(request, player_id):
-    # Extract player data from request or session (whichever method you've chosen)
+    # Extract player data from request or session
     players = request.session.get('search_results')
     selected_player = next((p for p in players if p['id'] == player_id), None)
 
@@ -49,19 +51,47 @@ def add_player(request, player_id):
         messages.error(request, "Couldn't find the selected player.")
         return redirect('player_search:search_player')
 
-    # Extract player data and save to the database
+    # API Base and Headers
+    api_base = 'https://futdb.app/api/'
+    headers = {'X-AUTH-TOKEN': 'aa1bc882-5c89-467e-bee1-b7d1e1be8382'}
+
+    # Fetch Nation, Club, and League information
+    try:
+        nation_response = requests.get(f"{api_base}nations/{selected_player['nation']}", headers=headers)
+        nation_response.raise_for_status()
+        nation_data = nation_response.json()
+        print(f"Nation Data: {nation_data}") 
+
+        club_response = requests.get(f"{api_base}clubs/{selected_player['club']}", headers=headers)
+        club_response.raise_for_status()
+        club_data = club_response.json()
+
+        league_response = requests.get(f"{api_base}leagues/{selected_player['league']}", headers=headers)
+        league_response.raise_for_status()
+        league_data = league_response.json()
+
+    except requests.exceptions.RequestException as e:
+        messages.error(request, f"Error fetching additional player data: {e}")
+        return redirect('player_search:search_player')
+
+    # Store to database
+    nation_obj, _ = Nation.objects.get_or_create(nation_id=nation_data['nation']['id'], defaults={'name': nation_data['nation']['name']})
+    league_obj, _ = League.objects.get_or_create(league_id=league_data['league']['id'], defaults={'name': league_data['league']['name']})
+    club_obj, _ = Club.objects.get_or_create(club_id=club_data['club']['id'], defaults={'name': club_data['club']['name'], 'league': league_obj})
+
     Player.objects.create(
         user=request.user,
         name=selected_player['name'],
         rating=selected_player['rating'],
         position=selected_player['position'],
-        nation=selected_player['nation'],
-        club=selected_player['club'],
-        league=selected_player['league']
+        nation=nation_obj,
+        club=club_obj
+        
     )
 
     messages.success(request, 'Player added successfully!')
     return redirect('player_search:search_player')
+
 
 def show_players(request):
     # Get the currently logged-in user
