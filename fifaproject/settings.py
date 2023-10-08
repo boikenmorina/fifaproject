@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.contenttypes',
     'player_search',
     'accounts',
+    'team_chemistry',
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
