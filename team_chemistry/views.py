@@ -2,6 +2,8 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from player_search.models import Player
 import json
+from collections import Counter
+from player_search.serializers import PlayerSerializer
 
 @csrf_exempt
 def calculate_team_chemistry(request):
@@ -89,3 +91,51 @@ def calculate_team_chemistry(request):
             return JsonResponse(response_data, status=200)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=400)
+@csrf_exempt
+def suggest_players(request):
+    try:
+        # Parse the received data
+        selected_players_data = json.loads(request.body)['selected_players']
+        all_players = [Player.objects.get(id=data['player_id']) for data in selected_players_data]
+        selected_player_ids = [player.id for player in all_players]
+
+        # Detect empty positions
+        all_positions = ['GK', 'CB', 'CB', 'CM', 'CM', 'LB', 'RB', 'ST', 'ST', 'LM', 'RM']
+        filled_positions_raw = {data['selected_position'] for data in selected_players_data}
+        from collections import defaultdict
+        filled_positions_count = defaultdict(int)
+        for position in filled_positions_raw:
+            sanitized_position = ''.join([i for i in position if not i.isdigit()])
+            filled_positions_count[sanitized_position] += 1
+
+        empty_positions = []
+
+# Determine which positions are still empty
+        for pos in all_positions:
+            if filled_positions_count[pos] > 0:
+               filled_positions_count[pos] -= 1
+            else:
+                empty_positions.append(pos)                 
+
+        # Find most common league and nation
+        leagues = [player.club.league for player in all_players if player.club]
+        nations = [player.nation for player in all_players if player.nation]
+        most_common_league = Counter(leagues).most_common(1)[0][0]
+        most_common_nation = Counter(nations).most_common(1)[0][0]
+
+        # Suggest players based on empty positions and most common league/nation
+        league_suggestions = Player.objects.filter(position__in=empty_positions, club__league=most_common_league).exclude(id__in=selected_player_ids)[:2]
+        nation_suggestions = Player.objects.filter(position__in=empty_positions, nation=most_common_nation).exclude(id__in=selected_player_ids)[:2]
+
+        serialized_league_suggestions = [PlayerSerializer(player).data for player in league_suggestions]
+        serialized_nation_suggestions = [PlayerSerializer(player).data for player in nation_suggestions]
+
+        suggestions = {
+            'league_suggestions': serialized_league_suggestions,
+            'nation_suggestions': serialized_nation_suggestions
+        }
+
+        return JsonResponse(suggestions, status=200)
+    
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
