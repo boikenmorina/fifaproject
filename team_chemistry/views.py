@@ -1,9 +1,13 @@
 from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 from player_search.models import Player
+from django.shortcuts import render
+from .models import Team
 import json
 from collections import Counter
 from player_search.serializers import PlayerSerializer
+from django.core.exceptions import ObjectDoesNotExist
+
 
 @csrf_exempt
 def calculate_team_chemistry(request):
@@ -13,7 +17,7 @@ def calculate_team_chemistry(request):
             selected_players_data = json.loads(request.body)['selected_players']
             all_players = [Player.objects.get(id=data['player_id']) for data in selected_players_data]
 
-            # Clean positions and gather valid players
+            # Clean positions and put the players in their right positions as valid players
             valid_players = []
             for data in selected_players_data:
                 data['selected_position'] = ''.join([i for i in data['selected_position'] if not i.isdigit()])
@@ -99,7 +103,7 @@ def suggest_players(request):
         all_players = [Player.objects.get(id=data['player_id']) for data in selected_players_data]
         selected_player_ids = [player.id for player in all_players]
 
-        # Detect empty positions
+        # Detect empty positions, by removing the number in react positions 
         all_positions = ['GK', 'CB', 'CB', 'CM', 'CM', 'LB', 'RB', 'ST', 'ST', 'LM', 'RM']
         filled_positions_raw = {data['selected_position'] for data in selected_players_data}
         from collections import defaultdict
@@ -117,7 +121,7 @@ def suggest_players(request):
             else:
                 empty_positions.append(pos)                 
 
-        # Find most common league and nation
+        # Find most common league and nation by making a list with touple for league and counter and getting the most popular one
         leagues = [player.club.league for player in all_players if player.club]
         nations = [player.nation for player in all_players if player.nation]
         most_common_league = Counter(leagues).most_common(1)[0][0]
@@ -139,3 +143,56 @@ def suggest_players(request):
     
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=400)
+    
+@csrf_exempt
+def team_submit(request):
+    try:
+       
+        
+
+       
+
+        # Add the received data
+        data = json.loads(request.body)
+        team_name = data['teamName']
+        team_rating = data['teamRating']
+        team_chemistry = data['teamChemistry']
+        players_in_positions = data['playersInPositions']
+
+        # Create and save the new Team
+        player_names_str = ','.join([str(player['name']) for player in players_in_positions.values()])
+        new_team = Team(
+            name=team_name,
+            rating=team_rating,
+            chemistry=team_chemistry,
+            player_names=player_names_str,
+              
+        )
+        new_team.save()
+
+        # Get the ids of players who are submitted and remove them from database
+        player_ids_to_remove = [player['id'] for player in players_in_positions.values()]
+        Player.objects.filter(id__in=player_ids_to_remove,).delete()  
+
+        return JsonResponse({'status': 'success'}, status=200)
+        
+    except ObjectDoesNotExist as e:
+        return JsonResponse({'error': f"Object not found: {e}"}, status=404)
+    
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=400)
+
+
+def display_teams(request):
+    try:
+        
+
+        
+        all_teams = Team.objects.all()
+
+        return render(request, 'display_teams.html', {'teams': all_teams})
+
+    except Exception as e:
+        return render(request, 'error.html', {'error': str(e)})
+    
+ 

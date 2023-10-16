@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>My Teams</title>
+</head>
+<body>
+    <h1>My Submitted Teams</h1>
+
+    <ul>
+        {% for team in teams %}
+        <li>
+            <strong>Name:</strong> {{ team.name }} <br>
+            <strong>Rating:</strong> {{ team.rating }} <br>
+            <strong>Chemistry:</strong> {{ team.chemistry }} <br>
+            <strong>Player Names:</strong> {{ team.player_names }}
+        </li>
+        {% endfor %}
+    </ul>
+
+</body>
+</html>

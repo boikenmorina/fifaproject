@@ -6,10 +6,10 @@ from django.contrib import messages
 from .serializers import PlayerSerializer
 from django.http import JsonResponse
 from collections import defaultdict
-from django.contrib.auth.decorators import login_required
 
 
 
+ # from futdb documentation
 
 def search_player(request):
     form = PlayerSearchForm(request.POST or None)
@@ -29,7 +29,7 @@ def search_player(request):
 
             players = data.get('items', [])
 
-            # Store the players in the session for later access
+            # Save the players in the session 
             request.session['search_results'] = players
 
             return render(request, 'player_search/results.html', {'players': players, 'form': form})
@@ -43,7 +43,7 @@ def search_player(request):
 import requests
 
 def add_player(request, player_id):
-    # Extract player data from request or session
+    # Get the search results
     players = request.session.get('search_results')
     selected_player = next((p for p in players if p['id'] == player_id), None)
 
@@ -51,7 +51,7 @@ def add_player(request, player_id):
         messages.error(request, "Couldn't find the selected player.")
         return redirect('player_search:search_player')
 
-    # API Base and Headers
+    
     api_base = 'https://futdb.app/api/'
     headers = {'X-AUTH-TOKEN': 'aa1bc882-5c89-467e-bee1-b7d1e1be8382'}
 
@@ -112,6 +112,7 @@ def get_all_data(request):
     user = request.user.id
     players = Player.objects.filter(user=user).order_by('-rating')
 
+# a dictionairy data is made with two keys: leagues, which each contain dictionaries for clubs, and clubs which have the players
     data = {
         "leagues": defaultdict(lambda: {
             "clubs": defaultdict(list)
